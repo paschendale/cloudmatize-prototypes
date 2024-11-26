@@ -1,5 +1,4 @@
 import { BrowserRouter, Route, Routes } from "react-router";
-import "./App.css";
 import GreenAreas from "./pages/green-areas";
 
 function App() {
