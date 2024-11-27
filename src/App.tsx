@@ -5,7 +5,7 @@ function App() {
   return (
     <BrowserRouter basename={"/cloudmatize-prototypes/"}>
       <Routes>
-        <Route path="/green-areas" element={<GreenAreas />} />
+        <Route path="/" element={<GreenAreas />} />
       </Routes>
     </BrowserRouter>
   );
