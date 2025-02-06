@@ -1,6 +1,6 @@
 import { RLayerVectorTile, RMap, ROSM } from "rlayers";
 import "ol/ol.css";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MVT from "ol/format/MVT";
 import { Fill, Stroke, Style } from "ol/style";
 import {
@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const cities = [
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const mockedCities = [
   {
     id: 2,
     name: "Campo Grande",
@@ -120,14 +121,33 @@ const cities = [
 
 export default function GreenAreas() {
   const [currentCity, setCurrentCity] = useState<(typeof cities)[0]>();
+  const [cities, setCities] = useState<typeof mockedCities>([]);
   const map = useRef<RMap>(null);
+
+  useEffect(() => {
+    const fetchMunicipalities = async () => {
+      const response = await fetch(
+        `https://postgrest-dev-945363624703.us-central1.run.app/municipality_boundaries_with_extent`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch municipalities");
+      }
+
+      const data = await response.json();
+
+      setCities(data);
+    };
+
+    fetchMunicipalities();
+  }, []);
 
   function handleValueChange(v: string) {
     const selectedCity = cities.filter((e) => String(e.id) === v);
     if (selectedCity.length === 0) throw new Error("Eita");
     setCurrentCity(selectedCity[0]);
 
-    if (map.current) {
+    if (map.current && selectedCity.length > 0) {
       map.current.ol.getView().fit(selectedCity[0].extent, {
         size: map.current.ol.getSize(),
         duration: 1000,
@@ -148,30 +168,30 @@ export default function GreenAreas() {
         }}
         className="w-[100%] h-[100%]"
       >
-        <RLayerVectorTile
-          url={"http://34.171.229.232:7800/shared.green_areas/{z}/{x}/{y}.pbf"}
-          format={new MVT()}
-          zIndex={100}
-          style={(feature) => {
-            const id = feature.get("id_municipality_boundaries");
+        {currentCity && (
+          <RLayerVectorTile
+            url={`https://pg-tileserv-dev-955707917965.us-central1.run.app/shared.green_areas_by_municipality/{z}/{x}/{y}.pbf?municipality_id=${currentCity.id}`}
+            format={new MVT()}
+            zIndex={100}
+            style={(feature) => {
+              const id = feature.get("id_municipality_boundaries");
 
-            if (!currentCity || id !== currentCity.id) return;
+              if (!currentCity || id !== currentCity.id) return;
 
-            return new Style({
-              stroke: new Stroke({
-                color: "green",
-                width: 1,
-              }),
-              fill: new Fill({
-                color: "rgba(20,200,20,0.5)",
-              }),
-            });
-          }}
-        ></RLayerVectorTile>
+              return new Style({
+                stroke: new Stroke({
+                  color: "green",
+                  width: 1,
+                }),
+                fill: new Fill({
+                  color: "rgba(20,200,20,0.5)",
+                }),
+              });
+            }}
+          ></RLayerVectorTile>
+        )}
         <RLayerVectorTile
-          url={
-            "http://34.171.229.232:7800/shared.municipality_boundaries/{z}/{x}/{y}.pbf"
-          }
+          url={`⁠https://pg-tileserv-dev-955707917965.us-central1.run.app/shared.municipality_boundaries/{z}/{x}/{y}.pbf`}
           format={new MVT()}
           zIndex={100}
           style={(feature) => {
